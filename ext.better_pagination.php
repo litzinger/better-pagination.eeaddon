@@ -74,6 +74,13 @@ class Better_pagination_ext {
     {
         $this->EE =& get_instance();
         $this->settings = $settings;
+
+        // Create cache
+        if (! isset($this->EE->session->cache['better_pagination']))
+        {
+            $this->EE->session->cache['better_pagination'] = array();
+        }
+        $this->cache =& $this->EE->session->cache['better_pagination'];
     }// ----------------------------------------------------------------------
     
     /**
@@ -124,8 +131,8 @@ class Better_pagination_ext {
         $this->_set_variables();
         
         // Set this so you can use it in {exp:channel:entries offset="{global:pagination_offset}"}
-        $this->EE->config->_global_vars[$this->offset_var] = $this->EE->input->get('page', 0);
-        
+        $this->EE->config->_global_vars[$this->offset_var] = $this->EE->input->get('page') ? $this->EE->input->get('page') : 0;
+
         return $session;
     }
     
@@ -150,38 +157,37 @@ class Better_pagination_ext {
             $this->page_var = $config['page_name'];
         }
     }
-    
+
     // ----------------------------------------------------------------------
-    
+
     /**
-     * channel_module_create_pagination
+     * channel_entries_query_result
      *
      * @param Instance of the current Channel->entries object
+     * @param Current entry result array
      * @return null
      */
-    public function channel_module_create_pagination(&$channel)
+    public function channel_entries_query_result(&$channel, $query_result)
     {
-        $channel->EE->extensions->end_script = TRUE;
-
         if (!isset($channel->pager_sql) OR $channel->pager_sql == '')
         {
-            return;
+            return $query_result;
         }
         
         $query = $channel->EE->db->query($channel->pager_sql);
         $count = ( !empty($query->num_rows) ) ? $query->num_rows : FALSE;
 
         // Only proceed if the option is set
-        if ($channel->paginate == TRUE)
+        if ($this->cache['pagination']->paginate == TRUE AND $count > 0)
         {
             $this->_set_variables();
             
             $params = $this->EE->TMPL->tagparams;
-            
+
             $page_param = $this->page_var;
             
             // Current page is actually an offset value
-            $offset = $this->EE->input->get($page_param, 0);
+            $offset = $this->EE->input->get($page_param) ? $this->EE->input->get($page_param) : 0;
             $per_page = isset($params['limit']) ? $params['limit'] : 100;
             
             // Grab any existing query string
@@ -193,36 +199,71 @@ class Better_pagination_ext {
             // Make sure the base has a ? in it before CI->Pagination gets ahold of it or it will puke.
             $base_url = ! strstr($base_url, '?') ? $base_url .'?' : $base_url;
             
-            //Clean up any page params in the query string so CI->Pagination doesnt add multiples (yeah, it's not very smart).
+            // Clean up any page params in the query string so CI->Pagination doesnt add multiples (yeah, it's not very smart).
             $base_url = preg_replace("/&". $page_param ."=(\d+)|&". $page_param ."=/", "", $base_url);
             
             $this->EE->load->library('pagination');
-            $this->pagination = $this->EE->pagination;
             
             $total_pages = ceil($count / $per_page);
             
             // Initialize a new pagination object which does the hard work for us.
-            $this->pagination->initialize(array(
+            $this->EE->pagination->initialize(array(
                 'base_url'      => $base_url,
                 'per_page'      => $per_page,
+                'cur_page'      => $offset,
                 'total_rows'    => $count,
+                'prefix'        => '', // Remove that stupid P
                 'num_links'     => 100,
                 'uri_segment'   => 0,
                 'query_string_segment' => $page_param,
                 'page_query_string' => TRUE
             ));
             
-            $channel->total_pages = $total_pages;
-            $channel->current_page = $offset;
-            
-            $link_array = $this->pagination->create_link_array();
+            // $pagination->total_pages = $count;
+            $this->cache['pagination']->current_page = $offset;
+
+            $link_array = $this->EE->pagination->create_link_array();
             $link_array['total_pages'] = $total_pages;
-            $link_array['current_page'] = $offset; 
-            
+            $link_array['current_page'] = $offset;
+
+            $location = isset($params['paginate']) ? $params['paginate'] : 'bottom';
+
             // Update the {paginate} tag pair and {pagination_links} variable with the new variables.
-            $channel->pagination_links = $this->pagination->create_links();
-            $channel->paginate_data = $this->EE->TMPL->parse_variables($channel->paginate_data, array($link_array));
+            $this->cache['pagination']->pagination_links = $this->EE->pagination->create_links();
+            $this->cache['pagination']->template_data = $this->EE->TMPL->parse_variables($this->cache['pagination']->template_data, array($link_array));
+
+            // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
+            $this->cache['pagination']->template_data = preg_replace("/((\?)?&amp;". $page_param ."=)(\D)/", "$3", $this->cache['pagination']->template_data);
+
+            if ($location == 'both')
+            {
+                $this->EE->TMPL->tagdata = $this->cache['pagination']->template_data . $this->EE->TMPL->tagdata . $this->cache['pagination']->template_data;
+            }
+            elseif ($location == 'before')
+            {
+                $this->EE->TMPL->tagdata = $this->cache['pagination']->template_data . $this->EE->TMPL->tagdata;
+            }
+            else
+            {
+                $this->EE->TMPL->tagdata = $this->EE->TMPL->tagdata . $this->cache['pagination']->template_data;
+            }
         }
+
+        return $query_result;
+    }
+
+    // ----------------------------------------------------------------------
+    
+    /**
+     * channel_entries_tagdata
+     *
+     * @param Instance of the current Channel->entries object
+     * @return null
+     */
+    public function channel_module_create_pagination(&$pagination, $count)
+    {
+        $this->EE->extensions->end_script = TRUE;
+        $this->cache['pagination'] = $pagination;
     }
 
     // ----------------------------------------------------------------------
