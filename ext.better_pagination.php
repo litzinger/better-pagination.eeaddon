@@ -26,7 +26,15 @@
 
 
 /*
-    Usage
+    USAGE
+
+    This extension lets you paginate entries with a query string value, not the P{n} segment
+    that EE uses by default. By using a query string it ensures it does not interfere with
+    Structure (or any Pages module) URI. By default it will add ?&page={n} to your URLs.
+    
+    You can change "page" to "p", or any other value by setting $config['better_pagination']['page_name'] = 'foo'
+
+    NOTE: page is not an actual page (e.g. 1, 2, 3 etc), it is still an offset value.
 
     {exp:channel:entries
         channel="blog" 
@@ -81,7 +89,9 @@ class Better_pagination_ext {
             $this->EE->session->cache['better_pagination'] = array();
         }
         $this->cache =& $this->EE->session->cache['better_pagination'];
-    }// ----------------------------------------------------------------------
+    }
+
+    // ----------------------------------------------------------------------
     
     /**
      * Activate Extension
