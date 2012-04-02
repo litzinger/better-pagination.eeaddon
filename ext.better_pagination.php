@@ -235,17 +235,21 @@ class Better_pagination_ext {
             // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
             $this->cache['pagination']->template_data = preg_replace("/((\?)?&amp;". $page_param ."=)(\D)/", "$3", $this->cache['pagination']->template_data);
 
-            if ($location == 'both')
+            // Only add the pagination tag pair back to the page if we have navigation to show...
+            if ($total_pages > 1)
             {
-                $this->EE->TMPL->tagdata = $this->cache['pagination']->template_data . $this->EE->TMPL->tagdata . $this->cache['pagination']->template_data;
-            }
-            elseif ($location == 'before')
-            {
-                $this->EE->TMPL->tagdata = $this->cache['pagination']->template_data . $this->EE->TMPL->tagdata;
-            }
-            else
-            {
-                $this->EE->TMPL->tagdata = $this->EE->TMPL->tagdata . $this->cache['pagination']->template_data;
+                if ($location == 'both')
+                {
+                    $this->EE->TMPL->tagdata = $this->cache['pagination']->template_data . $this->EE->TMPL->tagdata . $this->cache['pagination']->template_data;
+                }
+                elseif ($location == 'before')
+                {
+                    $this->EE->TMPL->tagdata = $this->cache['pagination']->template_data . $this->EE->TMPL->tagdata;
+                }
+                else
+                {
+                    $this->EE->TMPL->tagdata = $this->EE->TMPL->tagdata . $this->cache['pagination']->template_data;
+                }
             }
         }
 
