@@ -26,15 +26,7 @@
 
 
 /*
-    USAGE
-
-    This extension lets you paginate entries with a query string value, not the P{n} segment
-    that EE uses by default. By using a query string it ensures it does not interfere with
-    Structure (or any Pages module) URI. By default it will add ?&page={n} to your URLs.
-    
-    You can change "page" to "p", or any other value by setting $config['better_pagination']['page_name'] = 'foo'
-
-    NOTE: page is not an actual page (e.g. 1, 2, 3 etc), it is still an offset value.
+    Usage
 
     {exp:channel:entries
         channel="blog" 
@@ -89,9 +81,7 @@ class Better_pagination_ext {
             $this->EE->session->cache['better_pagination'] = array();
         }
         $this->cache =& $this->EE->session->cache['better_pagination'];
-    }
-
-    // ----------------------------------------------------------------------
+    }// ----------------------------------------------------------------------
     
     /**
      * Activate Extension
@@ -236,31 +226,12 @@ class Better_pagination_ext {
             $link_array['total_pages'] = $total_pages;
             $link_array['current_page'] = $offset;
 
-            $location = isset($params['paginate']) ? $params['paginate'] : 'bottom';
-
             // Update the {paginate} tag pair and {pagination_links} variable with the new variables.
-            $this->cache['pagination']->pagination_links = $this->EE->pagination->create_links();
+            $this->cache['pagination']->page_links = $this->EE->pagination->create_links();
             $this->cache['pagination']->template_data = $this->EE->TMPL->parse_variables($this->cache['pagination']->template_data, array($link_array));
 
             // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
             $this->cache['pagination']->template_data = preg_replace("/((\?)?&amp;". $page_param ."=)(\D)/", "$3", $this->cache['pagination']->template_data);
-
-            // Only add the pagination tag pair back to the page if we have navigation to show...
-            if ($total_pages > 1)
-            {
-                if ($location == 'both')
-                {
-                    $this->EE->TMPL->tagdata = $this->cache['pagination']->template_data . $this->EE->TMPL->tagdata . $this->cache['pagination']->template_data;
-                }
-                elseif ($location == 'before')
-                {
-                    $this->EE->TMPL->tagdata = $this->cache['pagination']->template_data . $this->EE->TMPL->tagdata;
-                }
-                else
-                {
-                    $this->EE->TMPL->tagdata = $this->EE->TMPL->tagdata . $this->cache['pagination']->template_data;
-                }
-            }
         }
 
         return $query_result;
@@ -272,6 +243,7 @@ class Better_pagination_ext {
      * channel_entries_tagdata
      *
      * @param Instance of the current Channel->entries object
+     * @param Total results found to paginate over
      * @return null
      */
     public function channel_module_create_pagination(&$pagination, $count)
