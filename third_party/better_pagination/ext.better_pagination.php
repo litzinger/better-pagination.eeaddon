@@ -100,7 +100,8 @@ class Better_pagination_ext {
         
         $hooks = array(
             'sessions_end'  => 'sessions_end',
-            'channel_module_create_pagination'  => 'channel_module_create_pagination'
+            'channel_module_create_pagination'  => 'channel_module_create_pagination',
+            'channel_entries_query_result' => 'channel_entries_query_result'
         );
 
         foreach ($hooks as $hook => $method)
