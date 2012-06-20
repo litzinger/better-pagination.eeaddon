@@ -21,7 +21,7 @@
  * @subpackage  Addons
  * @category    Extension
  * @author      Brian Litzinger
- * @link        http://boldminded.com / http://nerdery.com
+ * @link        http://boldminded.com & http://nerdery.com
  */
 
 
@@ -81,8 +81,9 @@ class Better_pagination_ext {
             $this->EE->session->cache['better_pagination'] = array();
         }
         $this->cache =& $this->EE->session->cache['better_pagination'];
-    }// ----------------------------------------------------------------------
+    }
     
+
     /**
      * Activate Extension
      *
@@ -119,7 +120,6 @@ class Better_pagination_ext {
         }
     }   
 
-    // ----------------------------------------------------------------------
     
     /**
      * channel_entries_tagdata
@@ -137,30 +137,6 @@ class Better_pagination_ext {
         return $session;
     }
     
-    // Allow for variable override in your config file. 
-    // No need for a settings page for something this simple.
-    private function _set_variables()
-    {
-        // Our default
-        $this->offset_var = 'global:pagination_offset';
-        $this->page_var = 'page';
-        
-        $config = $this->EE->config->item('better_pagination');
-        
-        // User defined vars.
-        if (isset($config['offset_name']))
-        {
-            $this->offset_var = $config['offset_name'];
-        }
-        
-        if (isset($config['page_name']))
-        {
-            $this->page_var = $config['page_name'];
-        }
-    }
-
-    // ----------------------------------------------------------------------
-
     /**
      * channel_entries_query_result
      *
@@ -181,65 +157,83 @@ class Better_pagination_ext {
         // Only proceed if the option is set
         if ($this->cache['pagination']->paginate == TRUE AND $count > 0)
         {
-            $this->_set_variables();
-            
-            $params = $this->EE->TMPL->tagparams;
-
-            $page_param = $this->page_var;
-            
-            // Current page is actually an offset value
-            $offset = $this->EE->input->get($page_param) ? $this->EE->input->get($page_param) : 0;
-            $per_page = isset($params['limit']) ? $params['limit'] : 100;
-            
-            // Grab any existing query string
-            $query_string = (isset($_SERVER['QUERY_STRING']) AND $_SERVER['QUERY_STRING'] != '') ? '?'. $_SERVER['QUERY_STRING'] : '';
-            
-            // Set our base
-            $base_url = isset($params['pagination_base']) ? $params['pagination_base'] : $this->EE->config->slash_item('site_url') . $this->EE->uri->uri_string . $query_string;
-
-            // Make sure the base has a ? in it before CI->Pagination gets ahold of it or it will puke.
-            $base_url = ! strstr($base_url, '?') ? $base_url .'?' : $base_url;
-            
-            // Clean up any page params in the query string so CI->Pagination doesnt add multiples (yeah, it's not very smart).
-            $base_url = preg_replace("/&". $page_param ."=(\d+)|&". $page_param ."=/", "", $base_url);
-            
-            $this->EE->load->library('pagination');
-            
-            $total_pages = ceil($count / $per_page);
+            $this->_prep();
             
             // Initialize a new pagination object which does the hard work for us.
             $this->EE->pagination->initialize(array(
-                'base_url'      => $base_url,
-                'per_page'      => $per_page,
-                'cur_page'      => $offset,
+                'base_url'      => $this->base_url,
+                'per_page'      => $this->per_page,
+                'cur_page'      => $this->offset,
                 'total_rows'    => $count,
                 'prefix'        => '', // Remove that stupid P
                 'num_links'     => 100,
                 'uri_segment'   => 0,
-                'query_string_segment' => $page_param,
+                'query_string_segment' => $this->page_var,
                 'page_query_string' => TRUE
             ));
             
             // $pagination->total_pages = $count;
-            $this->cache['pagination']->current_page = $offset;
+            $this->cache['pagination']->current_page = $this->offset;
 
             $link_array = $this->EE->pagination->create_link_array();
-            $link_array['total_pages'] = $total_pages;
-            $link_array['current_page'] = $offset;
+            $link_array['total_pages'] = ceil($count / $this->per_page);
+            $link_array['current_page'] = $this->offset;
 
             // Update the {paginate} tag pair and {pagination_links} variable with the new variables.
             $this->cache['pagination']->page_links = $this->EE->pagination->create_links();
             $this->cache['pagination']->template_data = $this->EE->TMPL->parse_variables($this->cache['pagination']->template_data, array($link_array));
 
             // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
-            $this->cache['pagination']->template_data = preg_replace("/((\?)?&amp;". $page_param ."=)(\D)/", "$3", $this->cache['pagination']->template_data);
+            $this->cache['pagination']->template_data = preg_replace("/((\?)?&amp;".$this->page_var ."=)(\D)/", "$3", $this->cache['pagination']->template_data);
         }
 
         return $query_result;
     }
 
-    // ----------------------------------------------------------------------
     
+    /**
+     * calendar_events_create_pagination
+     *
+     * @param Instance of the current Calendar->events object
+     * @param Current pagination_data array
+     * @return null
+     */
+    public function calendar_events_create_pagination(&$events, $data)
+    {
+        // Only proceed if the option is set
+        if ($data['paginate'] == TRUE AND $data['total_results'] > 0)
+        {
+            $this->_prep();
+            
+            // Initialize a new pagination object which does the hard work for us.
+            $this->EE->pagination->initialize(array(
+                'base_url'      => $this->base_url,
+                'per_page'      => $this->per_page,
+                'cur_page'      => $this->offset,
+                'total_rows'    => $data['total_results'],
+                'prefix'        => '', // Remove that stupid P
+                'num_links'     => 100,
+                'uri_segment'   => 0,
+                'query_string_segment' => $this->page_var,
+                'page_query_string' => TRUE
+            ));
+            
+            $link_array = $this->EE->pagination->create_link_array();
+            $link_array['total_pages'] = $data['total_pages'];
+            $link_array['current_page'] = $this->offset;
+
+            // Update the {paginate} tag pair and {pagination_links} variable with the new variables.
+            $data['pagination_links'] = $this->EE->pagination->create_links();
+            $data['pagination_array'] = $link_array;
+            $data['paginate_tagpair_data'] = $this->EE->TMPL->parse_variables($data['paginate_tagpair_data'], array($link_array));
+
+            // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
+            $data['paginate_tagpair_data'] = preg_replace("/((\?)?&amp;". $this->page_var ."=)(\D)/", "$3", $data['paginate_tagpair_data']);
+        }
+
+        return $data;
+    }
+
     /**
      * channel_entries_tagdata
      *
@@ -253,7 +247,59 @@ class Better_pagination_ext {
         $this->cache['pagination'] = $pagination;
     }
 
-    // ----------------------------------------------------------------------
+    /*
+        Allow for variable override in your config file. 
+        No need for a settings page for something this simple.
+    */
+    private function _set_variables()
+    {
+        // Our default
+        $this->offset_var = 'global:pagination_offset';
+        $this->page_var = 'page';
+        
+        $config = $this->EE->config->item('better_pagination');
+        
+        // User defined vars.
+        if (isset($config['offset_name']))
+        {
+            $this->offset_var = $config['offset_name'];
+        }
+        
+        if (isset($config['page_name']))
+        {
+            $this->page_var = $config['page_name'];
+        }
+    }
+
+    /*
+        Common variables used in Entries or Calendar pagination
+    */
+    private function _prep()
+    {
+        $this->_set_variables();
+
+        $params = $this->EE->TMPL->tagparams;
+
+        // Current page is actually an offset value
+        $this->offset = $this->EE->input->get($this->page_var) ? $this->EE->input->get($this->page_var) : 0;
+        $this->per_page = isset($params['limit']) ? $params['limit'] : 100;
+        // For Solspace Calendar support
+        $this->per_page = isset($params['event_limit']) ? $params['event_limit'] : $this->per_page;
+        
+        // Grab any existing query string
+        $query_string = (isset($_SERVER['QUERY_STRING']) AND $_SERVER['QUERY_STRING'] != '') ? '?'. $_SERVER['QUERY_STRING'] : '';
+        
+        // Set our base
+        $this->base_url = isset($params['pagination_base']) ? $params['pagination_base'] : $this->EE->config->slash_item('site_url') . $this->EE->uri->uri_string . $query_string;
+
+        // Make sure the base has a ? in it before CI->Pagination gets ahold of it or it will puke.
+        $this->base_url = ! strstr($this->base_url, '?') ? $this->base_url .'?' : $this->base_url;
+        
+        // Clean up any page params in the query string so CI->Pagination doesnt add multiples (yeah, it's not very smart).
+        $this->base_url = preg_replace("/&". $this->page_var ."=(\d+)|&". $this->page_var ."=/", "", $this->base_url);
+        
+        $this->EE->load->library('pagination');
+    }
 
     /**
      * Disable Extension
@@ -268,7 +314,6 @@ class Better_pagination_ext {
         $this->EE->db->delete('extensions');
     }
 
-    // ----------------------------------------------------------------------
 
     /**
      * Update Extension
@@ -285,8 +330,6 @@ class Better_pagination_ext {
             return FALSE;
         }
     }   
-    
-    // ----------------------------------------------------------------------
 }
 
 /* End of file ext.better_pagination.php */
