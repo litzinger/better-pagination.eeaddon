@@ -52,6 +52,8 @@
         {/paginate}
 
     {/exp:channel:entries}
+
+    If using Stash, you may need to use a different Stash syntax to get pagination working. See https://gist.github.com/1206694
 */
 
 class Better_pagination_ext {
@@ -150,7 +152,7 @@ class Better_pagination_ext {
         {
             return $query_result;
         }
-        
+
         $query = $channel->EE->db->query($channel->pager_sql);
         $count = ( !empty($query->num_rows) ) ? $query->num_rows : FALSE;
 
@@ -171,12 +173,14 @@ class Better_pagination_ext {
                 'query_string_segment' => $this->page_var,
                 'page_query_string' => TRUE
             ));
+
+            $total_pages = ((int) $this->per_page == 1 AND $count > 1) ? $count : ceil($count / $this->per_page);
             
-            // $pagination->total_pages = $count;
+            $this->cache['pagination']->total_pages = $total_pages;
             $this->cache['pagination']->current_page = $this->offset;
 
             $link_array = $this->EE->pagination->create_link_array();
-            $link_array['total_pages'] = ceil($count / $this->per_page);
+            $link_array['total_pages'] = $total_pages;
             $link_array['current_page'] = $this->offset;
 
             // Update the {paginate} tag pair and {pagination_links} variable with the new variables.
@@ -185,6 +189,8 @@ class Better_pagination_ext {
 
             // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
             $this->cache['pagination']->template_data = preg_replace("/((\?)?&amp;".$this->page_var ."=)(\D)/", "$3", $this->cache['pagination']->template_data);
+
+            // var_dump($this->cache['pagination']);
         }
 
         return $query_result;
