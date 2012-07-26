@@ -66,7 +66,7 @@ class Better_pagination_ext {
     public $version         = '1.0';
     
     private $EE;
-    
+
     /**
      * Constructor
      *
@@ -160,19 +160,8 @@ class Better_pagination_ext {
         if ($this->cache['pagination']->paginate == TRUE AND $count > 0)
         {
             $this->_prep();
-            
-            // Initialize a new pagination object which does the hard work for us.
-            $this->EE->pagination->initialize(array(
-                'base_url'      => $this->base_url,
-                'per_page'      => $this->per_page,
-                'cur_page'      => $this->offset,
-                'total_rows'    => $count,
-                'prefix'        => '', // Remove that stupid P
-                'num_links'     => 100,
-                'uri_segment'   => 0,
-                'query_string_segment' => $this->page_var,
-                'page_query_string' => TRUE
-            ));
+
+            $this->_initialize($count);   
 
             $total_pages = ((int) $this->per_page == 1 AND $count > 1) ? $count : ceil($count / $this->per_page);
             
@@ -211,18 +200,7 @@ class Better_pagination_ext {
         {
             $this->_prep();
             
-            // Initialize a new pagination object which does the hard work for us.
-            $this->EE->pagination->initialize(array(
-                'base_url'      => $this->base_url,
-                'per_page'      => $this->per_page,
-                'cur_page'      => $this->offset,
-                'total_rows'    => $data['total_results'],
-                'prefix'        => '', // Remove that stupid P
-                'num_links'     => 100,
-                'uri_segment'   => 0,
-                'query_string_segment' => $this->page_var,
-                'page_query_string' => TRUE
-            ));
+            $this->_initialize($data['total_results']);            
             
             $link_array = $this->EE->pagination->create_link_array();
             $link_array['total_pages'] = $data['total_pages'];
@@ -241,6 +219,88 @@ class Better_pagination_ext {
     }
 
     /**
+     * rest_result
+     *
+     * Requires patch: https://gist.github.com/3184075
+     *
+     * @param Result array from REST module
+     * @param Total number of results found by REST module
+     * @return modified result array
+     */
+    public function rest_result($result, $total_results)
+    {
+        $this->_prep();
+
+        $this->cache['total_rows'] = $total_results;
+        $this->cache['total_pages'] = ceil($this->cache['total_rows'] / $this->params['limit']);
+
+        return $result;
+    }
+
+    /**
+     * rest_tagdata_end
+     *
+     * Requires patch: https://gist.github.com/3184075
+     *
+     * @param Template tag data within the {exp:rest} tag
+     * @return modified $tagdata with pagination results
+     */
+    public function rest_tagdata_end($tagdata)
+    {
+        $this->_prep();
+
+        // Do we have a paginate parameter? If not, just stop.
+        if ( ! isset($this->params['paginate']))
+        {
+            return $tagdata;
+        }
+
+        $paginate_tagdata = '';
+
+        // Grab paginate tag if it exists
+        preg_match_all("|".LD.'paginate.*?'.RD.'(.*?)'.LD.'/paginate'.RD."|s", $tagdata, $matches);
+
+        if (isset($matches[1]) && isset($matches[1][0]))
+        {
+            $paginate_tagpair = trim($matches[0][0]);
+            $paginate_tagdata = trim($matches[1][0]);
+
+            // Remove the {paginate} tag pair from the $tagdata so it only occurs once.
+            $tagdata = str_replace($paginate_tagpair, '', $tagdata);
+        }
+
+        $this->_initialize($this->cache['total_rows']);
+
+        $link_array = $this->EE->pagination->create_link_array();
+        $link_array['total_pages'] = $this->cache['total_pages'];
+        $link_array['current_page'] = $this->offset;
+
+        $data['pagination_links'] = $this->EE->pagination->create_links();
+        $data['pagination_array'] = $link_array;
+        $paginate_tagdata = $this->EE->TMPL->parse_variables($paginate_tagdata, array($link_array));
+
+        // Determine if pagination needs to go at the top and/or bottom. 
+        // Since we are not in the Channel parser we need to do this ourselves.
+        switch ($this->params['paginate'])
+        {
+            case "top":
+                $tagdata = $paginate_tagdata.$tagdata;
+            break;
+            case "both":
+                $tagdata = $paginate_tagdata.$tagdata.$paginate_tagdata;
+            break;
+            case "bottom":
+            default:
+                $tagdata = $tagdata.$paginate_tagdata;
+        }
+
+        // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
+        $tagdata = preg_replace("/((\?)?&amp;". $this->page_var ."=)(\D)/", "$3", $tagdata);
+
+        return $tagdata;
+    }
+
+    /**
      * channel_entries_tagdata
      *
      * @param Instance of the current Channel->entries object
@@ -251,6 +311,23 @@ class Better_pagination_ext {
     {
         $this->EE->extensions->end_script = TRUE;
         $this->cache['pagination'] = $pagination;
+    }
+
+
+    private function _initialize($total_results)
+    {
+        // Initialize a new pagination object which does the hard work for us.
+        $this->EE->pagination->initialize(array(
+            'base_url'      => $this->base_url,
+            'per_page'      => $this->per_page,
+            'cur_page'      => $this->offset,
+            'total_rows'    => $total_results,
+            'prefix'        => '', // Remove that stupid P
+            'num_links'     => 100,
+            'uri_segment'   => 0,
+            'query_string_segment' => $this->page_var,
+            'page_query_string' => TRUE
+        ));
     }
 
     /*
@@ -284,13 +361,13 @@ class Better_pagination_ext {
     {
         $this->_set_variables();
 
-        $params = $this->EE->TMPL->tagparams;
+        $this->params = $this->EE->TMPL->tagparams;
 
         // Current page is actually an offset value
         $this->offset = $this->EE->input->get($this->page_var) ? $this->EE->input->get($this->page_var) : 0;
-        $this->per_page = isset($params['limit']) ? $params['limit'] : 100;
+        $this->per_page = isset($this->params['limit']) ? $this->params['limit'] : 100;
         // For Solspace Calendar support
-        $this->per_page = isset($params['event_limit']) ? $params['event_limit'] : $this->per_page;
+        $this->per_page = isset($this->params['event_limit']) ? $this->params['event_limit'] : $this->per_page;
         
         // Grab any existing query string
         $query_string = (isset($_SERVER['QUERY_STRING']) AND $_SERVER['QUERY_STRING'] != '') ? '?'. $_SERVER['QUERY_STRING'] : '';
