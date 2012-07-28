@@ -67,6 +67,9 @@ class Better_pagination_ext {
     
     private $EE;
 
+    private $total_rows = 0;
+    private $total_pages = 0;
+    
     /**
      * Constructor
      *
@@ -363,9 +366,12 @@ class Better_pagination_ext {
 
         $this->params = $this->EE->TMPL->tagparams;
 
+        $this->params['limit'] = isset($this->params['limit']) ? $this->params['limit'] : 100;
+
         // Current page is actually an offset value
         $this->offset = $this->EE->input->get($this->page_var) ? $this->EE->input->get($this->page_var) : 0;
-        $this->per_page = isset($this->params['limit']) ? $this->params['limit'] : 100;
+        $this->per_page = $this->params['limit'];
+
         // For Solspace Calendar support
         $this->per_page = isset($this->params['event_limit']) ? $this->params['event_limit'] : $this->per_page;
         
