@@ -48,3 +48,7 @@ You can also rename the global variable used as the value of your offset paramet
 	<li><a href="http://site.com/news?&page=32" >3</a></li>
 	<li><a href="http://site.com/news?&page=48" >4</a></li>
 	<li><a href="http://site.com/news?&page=16" title="Next" class="arrow-next pager-element">Next</a></li>
+
+## 3rd Party Support
+
+This also works with the REST module, and Solspace's Calendar module, but you must add the following hook to Calendar for it to work: https://gist.github.com/3219428
