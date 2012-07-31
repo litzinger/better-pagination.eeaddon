@@ -1,6 +1,6 @@
 # Better Pagination
 
-This extension was created to replace the native pagination links e.g. /template-group/template/P1, with something... more usable. This will create sane, and normal pagination links such as /template-group/template?&page=1. The "page" parameter is still an offset, but it is easier to work with when writing PHP in your add-on, or if y ou use something like Super Globals or Switchee to reference GET variables. Best of all, it works with Strucure pages. No Freebie or ohter hacks necessary.
+This extension was created to replace the native pagination links e.g. /template-group/template/P1, with something... more usable. This will create sane, and normal pagination links such as /template-group/template?&page=1. The "page" parameter is still an offset, but it is easier to work with when writing PHP in your add-on, or if you use something like Super Globals or Switchee to reference GET variables. Best of all, it works with Strucure pages. No Freebie or other hacks necessary.
 
 Note this add-on is free and technically unsupported. You can report issues at boldminded.com/support, but fixes will always be lower priority for me. Feel free to fork this or submit pull requests.
 
