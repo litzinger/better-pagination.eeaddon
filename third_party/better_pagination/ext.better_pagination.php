@@ -132,7 +132,7 @@ class Better_pagination_ext {
         $this->_set_variables();
         
         // Set this so you can use it in {exp:channel:entries offset="{global:pagination_offset}"}
-        $this->EE->config->_global_vars[$this->offset_var] = $this->EE->input->get('page') ? $this->EE->input->get('page') : 0;
+        $this->EE->config->_global_vars[$this->offset_var] = $this->EE->input->get($this->page_var) ? $this->EE->input->get($this->page_var) : 0;
 
         return $session;
     }
