@@ -1,20 +1,6 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 
 /**
- * ExpressionEngine - by EllisLab
- *
- * @package     ExpressionEngine
- * @author      ExpressionEngine Dev Team
- * @copyright   Copyright (c) 2003 - 2011, EllisLab, Inc.
- * @license     http://expressionengine.com/user_guide/license.html
- * @link        http://expressionengine.com
- * @since       Version 2.0
- * @filesource
- */
- 
-// ------------------------------------------------------------------------
-
-/**
  * Better Pagination Extension
  *
  * @package     ExpressionEngine
@@ -26,6 +12,8 @@
 
 
 /*
+    NOTE, for this to work with Calendar module you need to make the following change: https://gist.github.com/3219428
+
     Usage
 
     {exp:channel:entries
@@ -53,7 +41,7 @@
 
     {/exp:channel:entries}
 
-    If using Stash, you may need to use a different Stash syntax to get pagination working. See https://gist.github.com/1206694
+    If using Stash, you may need to use a different Stash syntax to get pagination working: https://gist.github.com/1206694
 */
 
 class Better_pagination_ext {
@@ -107,7 +95,14 @@ class Better_pagination_ext {
         $hooks = array(
             'sessions_end'  => 'sessions_end',
             'channel_module_create_pagination'  => 'channel_module_create_pagination',
-            'channel_entries_query_result' => 'channel_entries_query_result'
+            'channel_entries_query_result' => 'channel_entries_query_result',
+
+            // For Solspace Calendar support (if the hook is added)
+            'calendar_events_create_pagination' => 'calendar_events_create_pagination',
+
+            // REST module support
+            'rest_result' => 'rest_result',
+            'rest_tagdata_end' => 'rest_tagdata_end'
         );
 
         foreach ($hooks as $hook => $method)
@@ -181,8 +176,6 @@ class Better_pagination_ext {
 
             // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
             $this->cache['pagination']->template_data = preg_replace("/((\?)?&amp;".$this->page_var ."=)(\D)/", "$3", $this->cache['pagination']->template_data);
-
-            // var_dump($this->cache['pagination']);
         }
 
         return $query_result;
