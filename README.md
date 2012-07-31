@@ -52,3 +52,4 @@ You can also rename the global variable used as the value of your offset paramet
 ## 3rd Party Support
 
 This also works with the REST module, and Solspace's Calendar module, but you must add the following hook to Calendar for it to work: https://gist.github.com/3219428
+
