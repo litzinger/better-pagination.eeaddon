@@ -305,7 +305,7 @@ class Better_pagination_ext {
      */
     public function channel_module_create_pagination(&$pagination, $count)
     {
-        $this->EE->extensions->end_script = TRUE;
+        // $this->EE->extensions->end_script = TRUE; // Causes big issues
         $this->cache['pagination'] = $pagination;
     }
 
