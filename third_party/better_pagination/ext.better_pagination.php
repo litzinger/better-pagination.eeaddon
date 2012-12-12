@@ -157,6 +157,10 @@ class Better_pagination_ext {
         // Only proceed if the option is set
         if ($this->cache['pagination']->paginate == TRUE AND $count > 0)
         {
+            // Re-build the pagination object otherwise the pagination
+            // might not show up on the last page if there is 1 entry
+            $channel->pagination->build($count);
+            
             $this->_prep();
 
             $this->_initialize($count);   
