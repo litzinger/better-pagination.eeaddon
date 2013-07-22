@@ -146,6 +146,13 @@ class Better_pagination_ext {
      */
     public function channel_entries_query_result(&$channel, $query_result)
     {
+        // Make sure we're working with the correct result array 
+        // if something else modified it.
+        if (ee()->extensions->last_call)
+        {
+            $query_result = ee()->extensions->last_call;
+        }
+
         if (!isset($channel->pager_sql) OR $channel->pager_sql == '')
         {
             return $query_result;
