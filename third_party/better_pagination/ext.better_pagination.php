@@ -130,7 +130,7 @@ class Better_pagination_ext {
     public function sessions_end($session)
     {
         $this->_set_variables();
-        
+
         // Set this so you can use it in {exp:channel:entries offset="{global:pagination_offset}"}
         $this->EE->config->_global_vars[$this->offset_var] = $this->EE->input->get($this->page_var) ? $this->EE->input->get($this->page_var) : 0;
 
@@ -148,9 +148,9 @@ class Better_pagination_ext {
     {
         // Make sure we're working with the correct result array 
         // if something else modified it.
-        if (ee()->extensions->last_call)
+        if ($this->EE->extensions->last_call)
         {
-            $query_result = ee()->extensions->last_call;
+            $query_result = $this->EE->extensions->last_call;
         }
 
         if (!isset($channel->pager_sql) OR $channel->pager_sql == '')
