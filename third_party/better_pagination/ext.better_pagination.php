@@ -42,6 +42,58 @@
     {/exp:channel:entries}
 
     If using Stash, you may need to use a different Stash syntax to get pagination working: https://gist.github.com/1206694
+
+
+
+    Example usage of the abstract methods.
+    To add pagination to any custom module tag add this to the end just before returning the $tagdata variable.
+    You will also need to add the {paginate} tag from the example above to your module tag.
+    Don't forget to add the following parameters to your tag:
+        limit="10" offset="{global:pagination_offset}" paginate="bottom"
+    In the example below $this->params['offset/limit'] can be substituted for TMPL->fetch_param as well.
+
+    // Tag data
+    $tagdata = $this->EE->TMPL->tagdata;
+
+    // Parse Conditioanls
+    $tagdata = $this->EE->functions->prep_conditionals($tagdata, $conds);
+
+    $total_results = 0;
+
+    if (is_array($vars))
+    {
+        $total_results = count($vars);
+
+        $offset = isset($this->params['offset']) ? $this->params['offset'] : 0;
+        $limit  = isset($this->params['limit']) ? $this->params['limit'] : 10;
+
+        $vars = array_slice($vars, $offset, $limit);
+    }
+
+    // -------------------------------------------
+    //  'better_pagination_abstract_result' hook
+    // 
+        if (ee()->extensions->active_hook('better_pagination_abstract_result'))
+        {
+            $vars = ee()->extensions->call('better_pagination_abstract_result', $vars, $total_results);
+        }
+    // 
+    // -------------------------------------------
+    
+    $tagdata = $this->EE->TMPL->parse_variables($tagdata, $vars);
+    
+    // -------------------------------------------
+    //  'better_pagination_abstract_tagdata' hook
+    // 
+        if (ee()->extensions->active_hook('better_pagination_abstract_tagdata'))
+        {
+            $tagdata = ee()->extensions->call('better_pagination_abstract_tagdata', $tagdata);
+        }
+    // 
+    // -------------------------------------------
+
+    // Parse Variables
+    return $tagdata;
 */
 
 class Better_pagination_ext {
@@ -51,7 +103,7 @@ class Better_pagination_ext {
     public $docs_url        = '';
     public $name            = 'Better Pagination';
     public $settings_exist  = 'n';
-    public $version         = '1.0';
+    public $version         = '1.1';
     
     private $EE;
 
@@ -225,16 +277,24 @@ class Better_pagination_ext {
         return $data;
     }
 
+    public function rest_result($result, $total_results)
+    {
+        return $this->abstract_result($result, $total_results);
+    }
+
+    public function rest_tagdata_end($tagdata)
+    {
+        return $this->abstract_tagdata_end($tagdata);
+    }
+
     /**
-     * rest_result
+     * abstract_result
      *
-     * Requires patch: https://gist.github.com/3184075
-     *
-     * @param Result array from REST module
-     * @param Total number of results found by REST module
+     * @param Result array of $vars from module tag
+     * @param Total number of $vars in the array
      * @return modified result array
      */
-    public function rest_result($result, $total_results)
+    public function abstract_result($result, $total_results)
     {
         $this->_prep();
 
@@ -245,14 +305,12 @@ class Better_pagination_ext {
     }
 
     /**
-     * rest_tagdata_end
+     * abstract_tagdata_end
      *
-     * Requires patch: https://gist.github.com/3184075
-     *
-     * @param Template tag data within the {exp:rest} tag
+     * @param Template tag data within your module tag
      * @return modified $tagdata with pagination results
      */
-    public function rest_tagdata_end($tagdata)
+    public function abstract_tagdata_end($tagdata)
     {
         $this->_prep();
 
