@@ -303,6 +303,12 @@ class Better_pagination_ext {
         $this->cache['total_rows'] = $total_results;
         $this->cache['total_pages'] = ceil($this->cache['total_rows'] / $this->params['limit']);
 
+        // Set total_results on each row so the var parses
+        foreach ($result as &$row)
+        {
+            $row['total_results'] = $total_results;
+        }
+
         return $result;
     }
 
