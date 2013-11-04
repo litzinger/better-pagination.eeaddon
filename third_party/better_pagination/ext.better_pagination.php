@@ -148,6 +148,8 @@ class Better_pagination_ext {
             'sessions_end'  => 'sessions_end',
             'channel_module_create_pagination'  => 'channel_module_create_pagination',
             'channel_entries_query_result' => 'channel_entries_query_result',
+            'abstract_result' => 'better_pagination_abstract_result',
+            'abstract_tagdata_end' => 'better_pagination_abstract_tagdata',
 
             // For Solspace Calendar support (if the hook is added)
             'calendar_events_create_pagination' => 'calendar_events_create_pagination',
