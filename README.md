@@ -53,3 +53,61 @@ You can also rename the global variable used as the value of your offset paramet
 
 This also works with the REST module, and Solspace's Calendar module, but you must add the following hook to Calendar for it to work: https://gist.github.com/3219428
 
+## Add-on Developers
+
+You can use Better Pagination to add pagination to any custom module tag with very little effort. You will need to call the 
+    
+    public function my_module_tag()
+    {
+        // Tag data
+        $tagdata = $this->EE->TMPL->tagdata;
+
+        // Do all your fun stuff here
+
+        // Parse Conditioanls
+        $tagdata = $this->EE->functions->prep_conditionals($tagdata, $conds);
+
+        // Assume no results
+        $total_results = 0;
+
+        // $vars will be your result array of data
+        if (is_array($vars))
+        {
+            $total_results = count($vars);
+
+            // Can use ee()->TMPL->fetch_param('offset') here instead
+            $offset = isset($this->params['offset']) ? $this->params['offset'] : 0;
+            $limit  = isset($this->params['limit']) ? $this->params['limit'] : 10;
+
+            // Slice the array to create the subset of data to show on the page
+            // Alternatively you can do an additional query to fetch your subset
+            // of data, but that requires an extra query to fetch the $total_results.
+            // This is the simplest implementation.
+            $vars = array_slice($vars, $offset, $limit);
+        }
+
+        // -------------------------------------------
+        //  'better_pagination_abstract_result' hook
+        // 
+            if (ee()->extensions->active_hook('better_pagination_abstract_result'))
+            {
+                $vars = ee()->extensions->call('better_pagination_abstract_result', $vars, $total_results);
+            }
+        // 
+        // -------------------------------------------
+        
+        $tagdata = $this->EE->TMPL->parse_variables($tagdata, $vars);
+        
+        // -------------------------------------------
+        //  'better_pagination_abstract_tagdata' hook
+        // 
+            if (ee()->extensions->active_hook('better_pagination_abstract_tagdata'))
+            {
+                $tagdata = ee()->extensions->call('better_pagination_abstract_tagdata', $tagdata);
+            }
+        // 
+        // -------------------------------------------
+
+        return $tagdata;
+    }
+
