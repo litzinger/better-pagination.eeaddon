@@ -354,17 +354,20 @@ class Better_pagination_ext {
 
         // Determine if pagination needs to go at the top and/or bottom. 
         // Since we are not in the Channel parser we need to do this ourselves.
-        switch ($this->params['paginate'])
+        if ($link_array['total_pages'] > 1)
         {
-            case "top":
-                $tagdata = $paginate_tagdata.$tagdata;
-            break;
-            case "both":
-                $tagdata = $paginate_tagdata.$tagdata.$paginate_tagdata;
-            break;
-            case "bottom":
-            default:
-                $tagdata = $tagdata.$paginate_tagdata;
+            switch ($this->params['paginate'])
+            {
+                case "top":
+                    $tagdata = $paginate_tagdata.$tagdata;
+                break;
+                case "both":
+                    $tagdata = $paginate_tagdata.$tagdata.$paginate_tagdata;
+                break;
+                case "bottom":
+                default:
+                    $tagdata = $tagdata.$paginate_tagdata;
+            }
         }
 
         // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
