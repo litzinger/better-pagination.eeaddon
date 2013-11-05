@@ -53,6 +53,8 @@ You can also rename the global variable used as the value of your offset paramet
 
 This also works with the REST module, and Solspace's Calendar module, but you must add the following hook to Calendar for it to work: https://gist.github.com/3219428
 
+If using Stash, you may need to use a different Stash syntax to get pagination working: https://gist.github.com/1206694
+
 ## Add-on Developers
 
 You can use Better Pagination to add pagination to any custom module tag with very little effort. You will need to call the better_pagination_abstract_result and better_pagination_abstract_tagdata hooks in your module tag. Use the exact same example above for the {paginate} tagpair, just swap out {exp:channel:entries} with {exp:your_module:tag_pair}. The limit, offset, and paginate parameters are still required.
