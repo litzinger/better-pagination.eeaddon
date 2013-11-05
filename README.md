@@ -56,6 +56,8 @@ This also works with the REST module, and Solspace's Calendar module, but you mu
 ## Add-on Developers
 
 You can use Better Pagination to add pagination to any custom module tag with very little effort. You will need to call the better_pagination_abstract_result and better_pagination_abstract_tagdata hooks in your module tag. Use the exact same example above for the {paginate} tagpair, just swap out {exp:channel:entries} with {exp:your_module:tag_pair}. The limit, offset, and paginate parameters are still required.
+
+Obviously this means that Better Pagination is required to be installed with your add-on.
     
     public function my_module_tag()
     {
