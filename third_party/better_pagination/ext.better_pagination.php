@@ -145,12 +145,18 @@ class Better_pagination_ext {
             $this->cache['pagination']->total_pages = $total_pages;
             $this->cache['pagination']->current_page = $this->offset;
 
-            $link_array = $this->EE->pagination->create_link_array();
+            $link_array = $this->_sanitize_link_array(
+                $this->EE->pagination->create_link_array()
+            );
+
             $link_array['total_pages'] = $total_pages;
             $link_array['current_page'] = $this->offset;
 
             // Update the {paginate} tag pair and {pagination_links} variable with the new variables.
-            $this->cache['pagination']->page_links = $this->EE->pagination->create_links();
+            $this->cache['pagination']->page_links = $this->_sanitize_links(
+                $this->EE->pagination->create_links()
+            );
+
             $this->cache['pagination']->template_data = $this->EE->TMPL->parse_variables($this->cache['pagination']->template_data, array($link_array));
 
             // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
@@ -375,6 +381,56 @@ class Better_pagination_ext {
         $this->base_url = preg_replace("/&". $this->page_var ."=(\d+)|&". $this->page_var ."=/", "", $this->base_url);
         
         $this->EE->load->library('pagination');
+    }
+
+    /**
+     * Sanitize pagination link array created from $this->EE->create_link_array
+     *
+     * @param array $links
+     *
+     * @return array
+     */
+    private function _sanitize_link_array($links)
+    {
+        $link_types = array ('first_page', 'previous_page', 'page', 'next_page', 'last_page');
+
+        foreach ($link_types as $link_type) {
+            foreach ($links[$link_type] as $index => $link) {
+                if (isset($link['pagination_url'])
+                    && $link['pagination_url'] == $this->_get_base_url_no_params()
+                ) {
+                    $links[$link_type][$index]['pagination_url'] = $this->base_url;
+                }
+            }
+        }
+
+        return $links;
+    }
+
+    /**
+     * Sanitize pagination links created from $this->EE->create_links
+     *
+     * @param string $links
+     *
+     * @return array
+     */
+    private function _sanitize_links($links)
+    {
+        $base_url_regex = '/"' . str_replace('/', '\/',  preg_quote($this->_get_base_url_no_params())) . '"/';
+
+        $links = preg_replace($base_url_regex, "\"{$this->base_url}\"", $links);
+
+        return $links;
+    }
+
+    /**
+     * Grab the base URL without GET params
+     *
+     * @return string
+     */
+    private function _get_base_url_no_params()
+    {
+        return preg_replace('/\?.*/', '', $this->base_url);
     }
 
     /**
