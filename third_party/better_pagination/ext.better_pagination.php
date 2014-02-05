@@ -392,6 +392,10 @@ class Better_pagination_ext {
      */
     private function _sanitize_link_array($links)
     {
+        if (!is_array($links)) {
+            return $links;
+        }
+
         $link_types = array ('first_page', 'previous_page', 'page', 'next_page', 'last_page');
 
         foreach ($link_types as $link_type) {
