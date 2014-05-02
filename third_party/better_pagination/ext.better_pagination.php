@@ -132,11 +132,17 @@ class Better_pagination_ext {
         // Only proceed if the option is set
         if ($this->cache['pagination']->paginate == TRUE AND $count > 0)
         {
+            $this->_prep();
+
+            // EE 2.8 changed the "build" method's signature. Guarding against the
+            // signature difference by passing null as second argument, if EE < 2.8
+            $per_page = version_compare(APP_VER, '2.7') >= 0
+                ? $this->per_page
+                : null;
+
             // Re-build the pagination object otherwise the pagination
             // might not show up on the last page if there is 1 entry
-            $channel->pagination->build($count);
-            
-            $this->_prep();
+            $channel->pagination->build($count, $per_page);
 
             $this->_initialize($count);   
 
