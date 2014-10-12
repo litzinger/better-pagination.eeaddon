@@ -17,7 +17,7 @@ class Better_pagination_ext {
     public $docs_url        = '';
     public $name            = 'Better Pagination';
     public $settings_exist  = 'n';
-    public $version         = '1.1';
+    public $version         = '1.2';
     
     private $EE;
 
@@ -100,6 +100,7 @@ class Better_pagination_ext {
         $this->_set_variables();
 
         // Set this so you can use it in {exp:channel:entries offset="{global:pagination_offset}"}
+//        var_dump($this->page_var, $this->per_page, $this->offset);
         $this->EE->config->_global_vars[$this->offset_var] = $this->EE->input->get($this->page_var) ? $this->EE->input->get($this->page_var) : 0;
 
         return $session;
@@ -132,13 +133,13 @@ class Better_pagination_ext {
         // Only proceed if the option is set
         if ($this->cache['pagination']->paginate == TRUE AND $count > 0)
         {
-            // Re-build the pagination object otherwise the pagination
-            // might not show up on the last page if there is 1 entry
-            $channel->pagination->build($count);
-            
             $this->_prep();
 
-            $this->_initialize($count);   
+            // Re-build the pagination object otherwise the pagination
+            // might not show up on the last page if there is 1 entry
+            $channel->pagination->build($count, $this->per_page);
+            
+            $this->_initialize($count);
 
             $total_pages = ((int) $this->per_page == 1 AND $count > 1) ? $count : ceil($count / $this->per_page);
             
