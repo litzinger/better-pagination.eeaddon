@@ -309,6 +309,7 @@ class Better_pagination_ext {
     {
         // Initialize a new pagination object which does the hard work for us.
         $this->EE->pagination->initialize(array(
+            'first_url'     => rtrim($this->base_url, '?'),
             'base_url'      => $this->base_url,
             'per_page'      => $this->per_page,
             'cur_page'      => $this->offset,
