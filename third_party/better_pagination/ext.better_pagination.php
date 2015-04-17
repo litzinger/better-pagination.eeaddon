@@ -315,7 +315,6 @@ class Better_pagination_ext {
             'cur_page'      => $this->offset,
             'total_rows'    => $total_results,
             'prefix'        => '', // Remove that stupid P
-            'num_links'     => 100,
             'uri_segment'   => 0,
             'query_string_segment' => $this->page_var,
             'page_query_string' => TRUE
