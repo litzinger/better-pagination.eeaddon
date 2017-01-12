@@ -19,38 +19,24 @@ class Better_pagination_ext {
     public $settings_exist  = 'n';
     public $version         = '1.2';
     
-    private $EE;
-
-    private $total_rows = 0;
     private $total_pages = 0;
     
     /**
-     * Constructor
-     *
      * @param   mixed   Settings array or empty string if none exist.
      */
     public function __construct($settings = '')
     {
-        $this->EE =& get_instance();
         $this->settings = $settings;
 
         // Create cache
-        if (! isset($this->EE->session->cache['better_pagination']))
-        {
-            $this->EE->session->cache['better_pagination'] = array();
+        if (! isset(ee()->session->cache['better_pagination'])) {
+            ee()->session->cache['better_pagination'] = array();
         }
-        $this->cache =& $this->EE->session->cache['better_pagination'];
+        $this->cache =& ee()->session->cache['better_pagination'];
     }
     
 
     /**
-     * Activate Extension
-     *
-     * This function enters the extension into the exp_extensions table
-     *
-     * @see http://codeigniter.com/user_guide/database/index.html for
-     * more information on the db class.
-     *
      * @return void
      */
     public function activate_extension()
@@ -84,7 +70,7 @@ class Better_pagination_ext {
                 'enabled'   => 'y'
             );
 
-            $this->EE->db->insert('extensions', $data);         
+            ee()->db->insert('extensions', $data);         
         }
     }   
 
@@ -100,15 +86,12 @@ class Better_pagination_ext {
         $this->_set_variables();
 
         // Set this so you can use it in {exp:channel:entries offset="{global:pagination_offset}"}
-//        var_dump($this->page_var, $this->per_page, $this->offset);
-        $this->EE->config->_global_vars[$this->offset_var] = $this->EE->input->get($this->page_var) ? $this->EE->input->get($this->page_var) : 0;
+        ee()->config->_global_vars[$this->offset_var] = ee()->input->get($this->page_var) ? ee()->input->get($this->page_var) : 0;
 
         return $session;
     }
     
     /**
-     * channel_entries_query_result
-     *
      * @param Instance of the current Channel->entries object
      * @param Current entry result array
      * @return null
@@ -117,9 +100,9 @@ class Better_pagination_ext {
     {
         // Make sure we're working with the correct result array 
         // if something else modified it.
-        if ($this->EE->extensions->last_call)
+        if (ee()->extensions->last_call)
         {
-            $query_result = $this->EE->extensions->last_call;
+            $query_result = ee()->extensions->last_call;
         }
 
         if (!isset($channel->pager_sql) OR $channel->pager_sql == '')
@@ -146,13 +129,13 @@ class Better_pagination_ext {
             $this->cache['pagination']->total_pages = $total_pages;
             $this->cache['pagination']->current_page = $this->offset;
 
-            $link_array = $this->EE->pagination->create_link_array();
+            $link_array = ee()->pagination->create_link_array();
             $link_array['total_pages'] = $total_pages;
             $link_array['current_page'] = $this->offset;
 
             // Update the {paginate} tag pair and {pagination_links} variable with the new variables.
-            $this->cache['pagination']->page_links = $this->EE->pagination->create_links();
-            $this->cache['pagination']->template_data = $this->EE->TMPL->parse_variables($this->cache['pagination']->template_data, array($link_array));
+            $this->cache['pagination']->page_links = ee()->pagination->create_links();
+            $this->cache['pagination']->template_data = ee()->TMPL->parse_variables($this->cache['pagination']->template_data, array($link_array));
 
             // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
             $this->cache['pagination']->template_data = preg_replace("/((\?)?&amp;".$this->page_var ."=)(\D)/", "$3", $this->cache['pagination']->template_data);
@@ -163,8 +146,6 @@ class Better_pagination_ext {
 
     
     /**
-     * calendar_events_create_pagination
-     *
      * @param Instance of the current Calendar->events object
      * @param Current pagination_data array
      * @return null
@@ -178,14 +159,14 @@ class Better_pagination_ext {
             
             $this->_initialize($data['total_results']);            
             
-            $link_array = $this->EE->pagination->create_link_array();
+            $link_array = ee()->pagination->create_link_array();
             $link_array['total_pages'] = $data['total_pages'];
             $link_array['current_page'] = $this->offset;
 
             // Update the {paginate} tag pair and {pagination_links} variable with the new variables.
-            $data['pagination_links'] = $this->EE->pagination->create_links();
+            $data['pagination_links'] = ee()->pagination->create_links();
             $data['pagination_array'] = $link_array;
-            $data['paginate_tagpair_data'] = $this->EE->TMPL->parse_variables($data['paginate_tagpair_data'], array($link_array));
+            $data['paginate_tagpair_data'] = ee()->TMPL->parse_variables($data['paginate_tagpair_data'], array($link_array));
 
             // Clean up empty page params from the URI - Thanks @adrienneleigh for the regex, again.
             $data['paginate_tagpair_data'] = preg_replace("/((\?)?&amp;". $this->page_var ."=)(\D)/", "$3", $data['paginate_tagpair_data']);
@@ -205,8 +186,6 @@ class Better_pagination_ext {
     }
 
     /**
-     * abstract_result
-     *
      * @param Result array of $vars from module tag
      * @param Total number of $vars in the array
      * @return modified result array
@@ -228,8 +207,6 @@ class Better_pagination_ext {
     }
 
     /**
-     * abstract_tagdata_end
-     *
      * @param Template tag data within your module tag
      * @return modified $tagdata with pagination results
      */
@@ -259,13 +236,13 @@ class Better_pagination_ext {
 
         $this->_initialize($this->cache['total_rows']);
 
-        $link_array = $this->EE->pagination->create_link_array();
+        $link_array = ee()->pagination->create_link_array();
         $link_array['total_pages'] = $this->cache['total_pages'];
         $link_array['current_page'] = $this->offset;
 
-        $data['pagination_links'] = $this->EE->pagination->create_links();
+        $data['pagination_links'] = ee()->pagination->create_links();
         $data['pagination_array'] = $link_array;
-        $paginate_tagdata = $this->EE->TMPL->parse_variables($paginate_tagdata, array($link_array));
+        $paginate_tagdata = ee()->TMPL->parse_variables($paginate_tagdata, array($link_array));
 
         // Determine if pagination needs to go at the top and/or bottom. 
         // Since we are not in the Channel parser we need to do this ourselves.
@@ -292,15 +269,13 @@ class Better_pagination_ext {
     }
 
     /**
-     * channel_entries_tagdata
-     *
      * @param Instance of the current Channel->entries object
      * @param Total results found to paginate over
      * @return null
      */
     public function channel_module_create_pagination(&$pagination, $count)
     {
-        // $this->EE->extensions->end_script = TRUE; // Causes big issues
+        // ee()->extensions->end_script = TRUE; // Causes big issues
         $this->cache['pagination'] = $pagination;
     }
 
@@ -308,7 +283,7 @@ class Better_pagination_ext {
     private function _initialize($total_results)
     {
         // Initialize a new pagination object which does the hard work for us.
-        $this->EE->pagination->initialize(array(
+        ee()->pagination->initialize(array(
             'base_url'      => $this->base_url,
             'per_page'      => $this->per_page,
             'cur_page'      => $this->offset,
@@ -321,17 +296,19 @@ class Better_pagination_ext {
         ));
     }
 
-    /*
-        Allow for variable override in your config file. 
-        No need for a settings page for something this simple.
-    */
+    /**
+     * Allow for variable override in your config file.
+     * No need for a settings page for something this simple.
+     *
+     * @return void
+     */
     private function _set_variables()
     {
         // Our default
         $this->offset_var = 'global:pagination_offset';
         $this->page_var = 'page';
         
-        $config = $this->EE->config->item('better_pagination');
+        $config = ee()->config->item('better_pagination');
         
         // User defined vars.
         if (isset($config['offset_name']))
@@ -345,19 +322,19 @@ class Better_pagination_ext {
         }
     }
 
-    /*
-        Common variables used in Entries or Calendar pagination
-    */
+    /**
+     * Common variables used in Entries or Calendar pagination
+     */
     private function _prep()
     {
         $this->_set_variables();
 
-        $this->params = $this->EE->TMPL->tagparams;
+        $this->params = ee()->TMPL->tagparams;
 
         $this->params['limit'] = isset($this->params['limit']) ? $this->params['limit'] : 100;
 
         // Current page is actually an offset value
-        $this->offset = $this->EE->input->get($this->page_var) ? $this->EE->input->get($this->page_var) : 0;
+        $this->offset = ee()->input->get($this->page_var) ? ee()->input->get($this->page_var) : 0;
         $this->per_page = $this->params['limit'];
 
         // For Solspace Calendar support
@@ -365,39 +342,33 @@ class Better_pagination_ext {
         
         // Grab any existing query string
         $query_string = (isset($_SERVER['QUERY_STRING']) AND $_SERVER['QUERY_STRING'] != '') ? '?'. $_SERVER['QUERY_STRING'] : '';
-        
+        $default_url = ee()->config->slash_item('site_url') . ee()->uri->uri_string . $query_string;
+
         // Set our base
-        $this->base_url = isset($params['pagination_base']) ? $params['pagination_base'] : $this->EE->config->slash_item('site_url') . $this->EE->uri->uri_string . $query_string;
+        $this->base_url = isset($this->params['pagination_base']) ? $this->params['pagination_base'] : $default_url;
 
         // Make sure the base has a ? in it before CI->Pagination gets ahold of it or it will puke.
         $this->base_url = ! strstr($this->base_url, '?') ? $this->base_url .'?' : $this->base_url;
         
         // Clean up any page params in the query string so CI->Pagination doesnt add multiples (yeah, it's not very smart).
         $this->base_url = preg_replace("/&". $this->page_var ."=(\d+)|&". $this->page_var ."=/", "", $this->base_url);
+
+        // Prevent query string script executions
+        $this->base_url = ee()->security->xss_clean($this->base_url);
         
-        $this->EE->load->library('pagination');
+        ee()->load->library('pagination');
     }
 
     /**
-     * Disable Extension
-     *
-     * This method removes information from the exp_extensions table
-     *
      * @return void
      */
     function disable_extension()
     {
-        $this->EE->db->where('class', __CLASS__);
-        $this->EE->db->delete('extensions');
+        ee()->db->where('class', __CLASS__);
+        ee()->db->delete('extensions');
     }
 
-
     /**
-     * Update Extension
-     *
-     * This function performs any necessary db updates when the extension
-     * page is visited
-     *
      * @return  mixed   void on update / false if none
      */
     function update_extension($current = '')
@@ -408,6 +379,3 @@ class Better_pagination_ext {
         }
     }   
 }
-
-/* End of file ext.better_pagination.php */
-/* Location: /system/expressionengine/third_party/better_pagination/ext.better_pagination.php */
