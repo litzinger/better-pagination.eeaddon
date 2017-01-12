@@ -40,6 +40,23 @@ class Better_pagination_ext {
             $this->EE->session->cache['better_pagination'] = array();
         }
         $this->cache =& $this->EE->session->cache['better_pagination'];
+
+        // Register 'page_var'
+        $config = $this->EE->config->item('better_pagination');
+
+        $this->page_var = 'page'; // default
+
+        if (isset($config['page_name']))
+        {
+            $this->page_var = $config['page_name'];
+        }
+
+        // Check we have a valid page number
+        if ( isset($_GET[$this->page_var]) && ! ctype_digit($_GET[$this->page_var]) )
+        {
+            // No - prevent query string script executions
+            $_GET[$this->page_var] = '';
+        }
     }
     
 
@@ -315,6 +332,7 @@ class Better_pagination_ext {
             'cur_page'      => $this->offset,
             'total_rows'    => $total_results,
             'prefix'        => '', // Remove that stupid P
+            'num_links'     => 100,
             'uri_segment'   => 0,
             'query_string_segment' => $this->page_var,
             'page_query_string' => TRUE
@@ -337,11 +355,6 @@ class Better_pagination_ext {
         if (isset($config['offset_name']))
         {
             $this->offset_var = $config['offset_name'];
-        }
-        
-        if (isset($config['page_name']))
-        {
-            $this->page_var = $config['page_name'];
         }
     }
 
@@ -367,15 +380,27 @@ class Better_pagination_ext {
         $query_string = (isset($_SERVER['QUERY_STRING']) AND $_SERVER['QUERY_STRING'] != '') ? '?'. $_SERVER['QUERY_STRING'] : '';
         
         // Set our base
-        $this->base_url = isset($params['pagination_base']) ? $params['pagination_base'] : $this->EE->config->slash_item('site_url') . $this->EE->uri->uri_string . $query_string;
+        $this->base_url = isset($this->params['pagination_base']) ? $this->params['pagination_base'] : $this->EE->config->slash_item('site_url') . $this->EE->uri->uri_string . $query_string;  
 
         // Make sure the base has a ? in it before CI->Pagination gets ahold of it or it will puke.
         $this->base_url = ! strstr($this->base_url, '?') ? $this->base_url .'?' : $this->base_url;
         
         // Clean up any page params in the query string so CI->Pagination doesnt add multiples (yeah, it's not very smart).
         $this->base_url = preg_replace("/&". $this->page_var ."=(\d+)|&". $this->page_var ."=/", "", $this->base_url);
+
+        // Prevent query string script executions
+        $this->base_url = $this->clean($this->base_url);
         
         $this->EE->load->library('pagination');
+    }
+
+    /**
+     * @param $string
+     * @return string
+     */
+    private function clean($string)
+    {
+        return str_replace(array('{', '}'), '', $string);
     }
 
     /**
