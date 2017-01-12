@@ -86,7 +86,7 @@ class Better_pagination_ext {
         $this->_set_variables();
 
         // Set this so you can use it in {exp:channel:entries offset="{global:pagination_offset}"}
-        ee()->config->_global_vars[$this->offset_var] = ee()->input->get($this->page_var) ? ee()->input->get($this->page_var) : 0;
+        ee()->config->_global_vars[$this->offset_var] = ee()->input->get($this->page_var, true) ? ee()->input->get($this->page_var, true) : 0;
 
         return $session;
     }
@@ -334,7 +334,7 @@ class Better_pagination_ext {
         $this->params['limit'] = isset($this->params['limit']) ? $this->params['limit'] : 100;
 
         // Current page is actually an offset value
-        $this->offset = ee()->input->get($this->page_var) ? ee()->input->get($this->page_var) : 0;
+        $this->offset = ee()->input->get($this->page_var, true) ? ee()->input->get($this->page_var, true) : 0;
         $this->per_page = $this->params['limit'];
 
         // For Solspace Calendar support
