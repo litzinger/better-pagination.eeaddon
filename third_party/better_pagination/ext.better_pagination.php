@@ -33,6 +33,9 @@ class Better_pagination_ext {
             ee()->session->cache['better_pagination'] = array();
         }
         $this->cache =& ee()->session->cache['better_pagination'];
+
+        // Clean the page variable before the CI Pagination class uses it.
+        $_GET['page'] = $this->clean($_GET['page']);
     }
     
 
