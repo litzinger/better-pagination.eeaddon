@@ -354,9 +354,19 @@ class Better_pagination_ext {
         $this->base_url = preg_replace("/&". $this->page_var ."=(\d+)|&". $this->page_var ."=/", "", $this->base_url);
 
         // Prevent query string script executions
-        $this->base_url = ee()->security->xss_clean($this->base_url);
+        $this->base_url = $this->clean($this->base_url);
         
         ee()->load->library('pagination');
+    }
+
+    /**
+     * @param $string
+     * @return string
+     */
+    private function clean($string)
+    {
+        $string = str_replace(array('{', '}'), '', $string);
+        return ee()->security->xss_clean($string);
     }
 
     /**
